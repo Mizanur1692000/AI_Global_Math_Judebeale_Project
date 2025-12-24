@@ -30,7 +30,7 @@ Follow these steps to get the project running on your local machine.
 ### 2. Clone the Repository
 
 ```bash
-git clone <your-repository-url>
+git clone <https://github.com/Mizanur1692000/AI_Global_Math_Judebeale_Project>
 cd AI_Global_Math_Judebeale_Project
 ```
 
