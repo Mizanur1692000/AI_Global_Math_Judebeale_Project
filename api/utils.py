@@ -14,7 +14,6 @@ if not GEMINI_API_KEY:
     print("GEMINI_API_KEY=your_api_key_here")
     sys.exit(1)
 
-# Initialize google.genai Client (replacement for deprecated configure)
 _genai_client = genai.Client(api_key=GEMINI_API_KEY)
 
 # Compatibility wrappers to preserve previous GenerativeModel-like interface
@@ -188,4 +187,3 @@ def process_math_problem_from_url(url: str, prompt: str = None) -> str:
         return solution
     except Exception as e:
         raise RuntimeError(f"Error processing math problem from URL: {str(e)}")
-
