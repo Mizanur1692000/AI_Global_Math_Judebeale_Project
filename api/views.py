@@ -82,9 +82,9 @@ START_WORK
 END_WORK
 
 GUIDELINES:
-- Use Delimiters: Always wrap LaTeX in 2$inline$ delimiters for expressions within a sentence; use $$...$$ for display equations.
+- Math Formatting: Write mathematical expressions using proper mathematical notation. For inline math, use \\(...\\). For display equations on their own line, use \\[...\\]. Do NOT use dollar signs ($) for math delimiters.
 - Show Your Work: Don't just provide the answer. Use a step-by-step table or bulleted list to explain the transformation at each stage.
-- Avoid "Over-Latexing": Only apply LaTeX to mathematical notation; keep normal text plain.
+- Clean Output: Keep normal text plain and only apply mathematical formatting to actual mathematical notation.
 - If the input is not a math problem, your ONLY response should be: **NOT_A_MATH_PROBLEM**
 
 --- USER INPUT ---
@@ -174,7 +174,7 @@ def check_solution(request):
         # -----------------------------
         # 1) Canonical correct solution
         # -----------------------------
-        problem_prompt = "Solve the following math problem. Provide only the final answer in its simplest form.\nUse LaTeX formatting if appropriate. Do not include any explanations or steps.\n\n"
+        problem_prompt = "Solve the following math problem. Provide only the final answer in its simplest form.\nUse proper mathematical notation with \\(...\\) for inline math if needed. Do NOT use dollar signs. Do not include any explanations or steps.\n\n"
         if problem_text and str(problem_text).strip():
             problem_prompt += f"Problem (text): {str(problem_text).strip()}\n\n"
         problem_prompt += "Final answer only:"
@@ -215,7 +215,7 @@ Do not include any explanations.
         # 3) Extract final answer from user's solution
         # -----------------------------
         extract_prompt = """
-Extract the final answer from the provided solution. Return only the answer (use LaTeX if appropriate).
+Extract the final answer from the provided solution. Return only the answer using proper mathematical notation with \\(...\\) for inline math if needed. Do NOT use dollar signs.
 If you cannot determine the final answer, return "UNCLEAR".
 """
         if solution_text and str(solution_text).strip():

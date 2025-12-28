@@ -1074,14 +1074,8 @@
             
             let html = text;
             
-            html = html.replace(/\$\$(.*?)\$\$/gs, function(match, equation) {
-                return `<div class="math-equation">\\[${equation.trim()}\\]</div>`;
-            });
-            
-            html = html.replace(/\$(.*?)\$/g, function(match, equation) {
-                return `<span class="math-inline">\\(${equation.trim()}\\)</span>`;
-            });
-            
+            // MathJax already handles \\[...\\] and \\(...\\) notation
+            // We just need to convert newlines to <br> for proper display
             html = html.replace(/\n/g, '<br>');
             
             setTimeout(() => {
