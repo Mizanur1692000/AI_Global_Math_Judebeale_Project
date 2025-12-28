@@ -77,15 +77,16 @@ Extract and solve the math problem from the user's input (which could be from an
 
 RESPONSE FORMAT (use literal markers on their own lines):
 START_WORK
-1.  **Step-by-Step Explanation**: Present your solution in a clear, step-by-step format. Use a bulleted list or a table to explain the transformation at each stage.
-2.  **Final Answer**: Clearly state the final answer.
+1. Step-by-Step Explanation: Present your solution in a clear, step-by-step format. Use a bulleted list or a table to explain the transformation at each stage.
+2. Final Answer: Clearly state the final answer.
 END_WORK
 
 GUIDELINES:
 - Math Formatting: Write mathematical expressions using proper mathematical notation. For inline math, use \\(...\\). For display equations on their own line, use \\[...\\]. Do NOT use dollar signs ($) for math delimiters.
 - Show Your Work: Don't just provide the answer. Use a step-by-step table or bulleted list to explain the transformation at each stage.
+- Natural Language: Write in natural, conversational language without using asterisks, bold formatting, or markdown. Use plain text only.
 - Clean Output: Keep normal text plain and only apply mathematical formatting to actual mathematical notation.
-- If the input is not a math problem, your ONLY response should be: **NOT_A_MATH_PROBLEM**
+- If the input is not a math problem, your ONLY response should be: NOT_A_MATH_PROBLEM
 
 --- USER INPUT ---
 {problem_description}
@@ -140,6 +141,10 @@ GUIDELINES:
             return "\n".join(lines).strip()
 
         solution_content = _normalize_numbering(solution_content)
+
+        # Remove asterisks used for markdown formatting to make responses more natural
+        solution_content = re.sub(r'\*\*([^*]+)\*\*', r'\1', solution_content)  # Remove **bold**
+        solution_content = re.sub(r'\*([^*]+)\*', r'\1', solution_content)  # Remove *italic*
 
         # Final safety: if still empty, mark as unable
         if not solution_content:
