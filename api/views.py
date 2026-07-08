@@ -285,7 +285,7 @@ Generate {count} unique grade {grade} math questions on {subject}.
 RULES:
 1. Difficulty strictly matches grade {grade} (e.g., rigorous AP-level for grade 12, foundational for grade 1).
 2. Provide a mix of pure mathematical/equation problems and word problems.
-3. Use LaTeX for ALL math. Use \\(...\\) for inline and \\[...\\] for display math. NO dollar signs ($).
+3. Use LaTeX for ALL math. IMPORTANT: Because the output is JSON, you MUST double-escape all LaTeX backslashes! Use \\\\(...\\\\) for inline and \\\\[...\\\\] for display math (e.g., \\\\int instead of \\int). NO dollar signs ($).
 
 Return ONLY a JSON array of exactly {count} objects formatted as:
 [{{ "question": "...", "answer": "..." }}]
