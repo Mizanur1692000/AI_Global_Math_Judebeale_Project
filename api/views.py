@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework import status
-from .utils import process_math_problem, extract_text_from_genai_response, classification_model, text_model
+from .utils import process_math_problem, extract_text_from_genai_response, classification_model, text_model, json_text_model
 import logging
 
 # Root: serve static/index.html if present, otherwise simple redirect-style HTML
@@ -280,75 +280,35 @@ def generate_math_question(request):
         questions = []
         try:
             json_prompt = f"""
-You are a math teacher. Generate {count} unique math questions for a student in grade {grade}
-on the topic of {subject}. Each question should be age-appropriate, clear, and solvable.
+Generate {count} unique grade {grade} math questions on {subject}.
 
-Return **only** valid JSON. The JSON must be an array of objects with exactly these keys:
-[
-  {{
-    "question": "question text here",
-    "answer": "answer text here"
-  }},
-  ...
-]
+RULES:
+1. Difficulty strictly matches grade {grade} (e.g., rigorous AP-level for grade 12, foundational for grade 1).
+2. Provide a mix of pure mathematical/equation problems and word problems.
+3. Use LaTeX for ALL math. Use \\(...\\) for inline and \\[...\\] for display math. NO dollar signs ($).
 
-Do NOT include any additional text outside the JSON array. Make sure there are exactly {count} objects.
+Return ONLY a JSON array of exactly {count} objects formatted as:
+[{{ "question": "...", "answer": "..." }}]
 """
-            response = text_model.generate_content(json_prompt)
+            response = json_text_model.generate_content(json_prompt)
             text = getattr(response, "text", "").strip() or str(response)
 
-            m = re.search(r'(\[.*\])', text, re.DOTALL)
-            if m:
-                try:
-                    arr = json.loads(m.group(1))
+            try:
+                # With application/json, it returns valid JSON directly.
+                m = re.search(r'(\[.*\])', text, re.DOTALL)
+                raw_json = m.group(1) if m else text
+                arr = json.loads(raw_json)
+                if isinstance(arr, list):
                     for item in arr:
                         q = item.get("question") if isinstance(item, dict) else None
                         a = item.get("answer") if isinstance(item, dict) else None
                         if q and a:
                             questions.append({"question": q.strip(), "answer": a.strip()})
-                except Exception:
-                    pass
+            except Exception as e:
+                logging.error(f"JSON parsing error: {str(e)}\nRaw output: {text}")
 
-            if len(questions) < count:
-                qa_pairs = re.findall(
-                    r"(?:Question\s*\d*[:：]\s*)(.*?)(?:\r?\n\s*Answer\s*\d*[:：]\s*)(.*?)(?=(?:\r?\n\s*Question\s*\d*[:：])|$)",
-                    text,
-                    re.DOTALL | re.IGNORECASE
-                )
-                for q, a in qa_pairs:
-                    if len(questions) >= count:
-                        break
-                    questions.append({"question": q.strip(), "answer": a.strip()})
-
-            attempt = 0
-            while len(questions) < count and attempt < (count * 2):
-                attempt += 1
-                single_prompt = f"""
-Generate 1 unique math question for grade {grade} on the topic {subject}.
-Return as:
-Question: ...
-Answer: ...
-Do not repeat previous questions.
-"""
-                resp = text_model.generate_content(single_prompt)
-                text_single = getattr(resp, "text", "").strip() or str(resp)
-                m2 = re.search(r"Question\s*\d*[:：]\s*(.*?)(?:\r?\n\s*Answer\s*\d*[:：]\s*(.*))?$",
-                               text_single, re.DOTALL | re.IGNORECASE)
-                if m2:
-                    q = (m2.group(1) or "").strip()
-                    a = (m2.group(2) or "").strip()
-                    if q and a and not any(q == e["question"] for e in questions):
-                        questions.append({"question": q, "answer": a})
-                        continue
-                lines = [ln.strip() for ln in text_single.splitlines() if ln.strip()]
-                if len(lines) >= 2:
-                    q = lines[0]
-                    a = lines[1]
-                    if not any(q == e["question"] for e in questions):
-                        questions.append({"question": q, "answer": a})
         except Exception as e:
             logging.error(f"Error generating questions from AI model: {str(e)}")
-            # Fallback when the AI model fails
             pass
 
 

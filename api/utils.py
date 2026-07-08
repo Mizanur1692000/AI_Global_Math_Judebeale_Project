@@ -8,10 +8,9 @@ import google.genai as genai
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    print("Error: GEMINI_API_KEY environment variable is not set.")
-    print("Please create a .env file with your API key:")
-    print("GEMINI_API_KEY=your_api_key_here")
+if not GEMINI_API_KEY or GEMINI_API_KEY.strip() == "" or GEMINI_API_KEY == "your_api_key_here":
+    print("Error: GEMINI_API_KEY is not set or contains the default placeholder value in .env.")
+    print("Please open the .env file in the root of the project and replace 'your_api_key_here' with your actual Gemini API key.")
     sys.exit(1)
 
 _genai_client = genai.Client(api_key=GEMINI_API_KEY)
@@ -67,6 +66,11 @@ class _ModelWrapper:
 
 # Base models (wrapped to preserve previous API)
 text_model = _ModelWrapper('gemini-2.5-flash', _genai_client)
+
+json_generation_config = {
+    "response_mime_type": "application/json",
+}
+json_text_model = _ModelWrapper('gemini-2.5-flash', _genai_client, generation_config=json_generation_config)
 
 # Deterministic config for classification
 classification_generation_config = {
