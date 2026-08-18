@@ -259,6 +259,7 @@ def generate_math_question(request):
     grade = request.data.get('grade')
     subject = request.data.get('subject')
     count = request.data.get('count', 1)
+    description = request.data.get('description', '').strip() if request.data.get('description') else ''
 
     if not grade or not subject:
         return JsonResponse({"detail": "Fields 'grade' and 'subject' are required."}, status=400)
@@ -279,13 +280,16 @@ def generate_math_question(request):
 
         questions = []
         try:
+            description_instruction = f"\nADDITIONAL INSTRUCTIONS FROM USER:\n{description}\n" if description else ""
             json_prompt = f"""
 Generate {count} unique grade {grade} math questions on {subject}.
-
+{description_instruction}
 RULES:
 1. Difficulty strictly matches grade {grade} (e.g., rigorous AP-level for grade 12, foundational for grade 1).
 2. Provide a mix of pure mathematical/equation problems and word problems.
-3. Use LaTeX for ALL math. IMPORTANT: Because the output is JSON, you MUST double-escape all LaTeX backslashes! Use \\\\(...\\\\) for inline and \\\\[...\\\\] for display math (e.g., \\\\int instead of \\int). NO dollar signs ($).
+3. Use LaTeX for ALL mathematical expressions. Because the output is JSON, you MUST double-escape all LaTeX backslashes. Use \\\\(...\\\\) for inline math and \\\\[...\\\\] for display math (e.g., \\\\frac, \\\\sqrt, \\\\int, \\\\lim). Do NOT use dollar signs ($) for math delimiters.
+4. ANSWERS MUST BE CONCISE: Provide only the essential solving steps and the final answer. Maximum 2-3 short steps. Do NOT write lengthy explanations. Example answer format: "Step 1: Simplify \\\\(2x + 3 = 7\\\\). Step 2: \\\\(x = 2\\\\). Final Answer: \\\\(x = 2\\\\)"
+5. Do NOT use markdown formatting (no ** or * for bold/italic). Use plain text only for non-math content.
 
 Return ONLY a JSON array of exactly {count} objects formatted as:
 [{{ "question": "...", "answer": "..." }}]
@@ -324,12 +328,15 @@ Return ONLY a JSON array of exactly {count} objects formatted as:
                 "answer": qitem["answer"]
             })
 
-        return JsonResponse({
+        response_data = {
             "grade": grade,
             "subject": subject,
             "count": count,
             "questions": result
-        })
+        }
+        if description:
+            response_data["description"] = description
+        return JsonResponse(response_data)
     except Exception as e:
         return JsonResponse({"detail": f"Error generating questions: {str(e)}"}, status=500)
 

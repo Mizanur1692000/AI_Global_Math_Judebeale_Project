@@ -566,6 +566,8 @@
             padding: 2rem;
             margin-bottom: 2rem;
             box-shadow: 0 4px 20px rgba(0, 212, 255, 0.2);
+            overflow-x: auto;
+            word-wrap: break-word;
         }
         
         .result-header {
@@ -1011,6 +1013,14 @@
                             </select>
                         </div>
                         
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="bi bi-card-text"></i>
+                                Description (Optional)
+                            </label>
+                            <textarea class="form-control" id="descriptionInput" rows="3" placeholder="e.g., Focus on word problems involving real-life scenarios, or include problems that require multi-step solving"></textarea>
+                        </div>
+                        
                         <button class="btn-primary" onclick="generateQuestions()">
                             <span>
                                 <i class="bi bi-magic"></i>
@@ -1275,6 +1285,7 @@
             const grade = document.getElementById('gradeSelect').value;
             const subject = document.getElementById('subjectInput').value?.trim();
             const count = document.getElementById('questionCount').value;
+            const description = document.getElementById('descriptionInput').value?.trim();
             
             if (!grade) {
                 showNotification('Please select a grade level', 'warning');
@@ -1289,10 +1300,14 @@
             showLoading('questionResult');
             
             try {
+                let bodyStr = `grade=${encodeURIComponent(grade)}&subject=${encodeURIComponent(subject)}&count=${encodeURIComponent(count)}`;
+                if (description) {
+                    bodyStr += `&description=${encodeURIComponent(description)}`;
+                }
                 const response = await fetch(`${API_URL}/generate-question`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `grade=${encodeURIComponent(grade)}&subject=${encodeURIComponent(subject)}&count=${encodeURIComponent(count)}`
+                    body: bodyStr
                 });
                 
                 if (!response.ok) throw new Error(`Server error: ${response.status}`);
@@ -1324,6 +1339,10 @@
                 });
                 
                 document.getElementById('questionResult').innerHTML = questionsHtml;
+                
+                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                    MathJax.typesetPromise().catch(err => console.log('MathJax error:', err));
+                }
             } catch (error) {
                 displayError('questionResult', error);
             }
@@ -1338,6 +1357,9 @@
                 if (answerDiv.style.display === 'none') {
                     answerDiv.style.display = 'block';
                     toggleButton.innerHTML = '<i class="bi bi-eye-slash"></i> Hide';
+                    if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                        MathJax.typesetPromise([answerDiv]).catch(err => console.log('MathJax error:', err));
+                    }
                 } else {
                     answerDiv.style.display = 'none';
                     toggleButton.innerHTML = '<i class="bi bi-eye"></i> Show';
